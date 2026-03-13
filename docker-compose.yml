@@ -7,9 +7,8 @@ services:
     ports:
       - "48080:8000"
     volumes:
-      - ./data:/app/data
-      # Montamos las rutas físicas para que el escáner las vea
-      - /dev/disk/by-id:/dev/disk/by-id:ro
-      - /sys/class/hwmon:/sys/class/hwmon:rw
+      - ./data:/app/data                        # Guarda la BD, configs e idiomas
+      - /dev/disk/by-id:/dev/disk/by-id:ro      # Necesario para mapeo persistente ZFS
+      - /sys/class/hwmon:/sys/class/hwmon:rw    # Necesario para inyectar voltaje PWM e i2c
     environment:
-      - TZ=Europe/Madrid # Cambia esto si es necesario
+      - TZ=Europe/Madrid    # Cambia esto si es necesario
