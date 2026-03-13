@@ -64,13 +64,15 @@ services:
     image: ctagadev/zfs-guardian:latest # Adjust to your DockerHub/GHCR image
     container_name: zfs-guardian
     privileged: true
+    restart: unless-stopped
     ports:
       - "48080:8000"
     volumes:
       - ./data:/app/data                        # Stores DB, configs, and languages
       - /dev/disk/by-id:/dev/disk/by-id:ro      # Needed for persistent ZFS mapping
       - /sys/class/hwmon:/sys/class/hwmon:rw    # Needed to inject PWM voltage & read i2c
-    restart: unless-stopped
+    environment:
+      - TZ=Europe/Madrid
 ```
 
 Start the container:
