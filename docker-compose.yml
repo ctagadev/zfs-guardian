@@ -1,0 +1,15 @@
+services:
+  zfs-guardian:
+    build: .
+    container_name: zfs-guardian
+    privileged: true
+    restart: unless-stopped
+    ports:
+      - "48082:8000"
+    volumes:
+      - ./data:/app/data
+      # Montamos las rutas físicas para que el escáner las vea
+      - /dev/disk/by-id:/dev/disk/by-id:ro
+      - /sys/class/hwmon:/sys/class/hwmon:rw
+    environment:
+      - TZ=Europe/Madrid # Cambia esto si es necesario

@@ -1,0 +1,74 @@
+/* static/css/style.css */
+body { font-family: 'Segoe UI', sans-serif; background: #0a0a0a; color: #dcdcdc; margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+.header { width: 100%; background: #111; padding: 15px 0; border-bottom: 2px solid #333; display: flex; justify-content: center; box-sizing: border-box; }
+.header-content { width: 100%; max-width: 1200px; display: flex; flex-direction: column; align-items: center; gap: 15px; padding: 0 20px; box-sizing: border-box; }
+.header h1 { margin: 0; color: #00e676; font-size: 1.5em; text-align: center; width: 100%; }
+.header-controls { text-align: center; width: 100%; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+@media (min-width: 768px) { .header-content { flex-direction: row; justify-content: space-between; } .header h1 { width: auto; text-align: left; } .header-controls { width: auto; flex-direction: row; justify-content: flex-end; } }
+
+.tabs { display: flex; gap: 5px; width: 100%; max-width: 1200px; margin: 20px auto 0 auto; padding: 0 20px; flex-wrap: wrap; justify-content: center; box-sizing: border-box; }
+.tab-btn { background: #1a1a1a; color: #888; border: 1px solid #333; border-bottom: none; padding: 12px 15px; border-radius: 8px 8px 0 0; cursor: pointer; font-weight: bold; font-size: 0.9em; transition: 0.2s; flex: 1 1 12%; text-align: center; min-width: 90px; }
+.tab-btn.active { background: #00e676; color: #000; }
+@media (min-width: 768px) { .tabs { justify-content: flex-start; } .tab-btn { flex: none; padding: 12px 20px; font-size: 1em; } }
+
+.tab-content { display: none; width: 100%; max-width: 1200px; margin: 0 auto; padding: 20px; box-sizing: border-box; animation: fadeIn 0.3s; }
+.tab-content.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; }
+@media (min-width: 768px) { .grid { gap: 20px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); } }
+.card { background: #141414; padding: 20px; border-radius: 12px; border: 1px solid #2a2a2a; text-align: center; box-sizing: border-box; overflow: hidden; }
+
+.temp { font-size: 3em; font-weight: bold; margin: 5px 0; }
+@media (min-width: 768px) { .temp { font-size: 3.5em; } }
+.t-green { color: #00e676; } .t-orange { color: #ffab40; } .t-red { color: #ff5252; animation: pulse 1.5s infinite; }
+
+button { background: #222; color: #fff; border: 1px solid #444; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-size: 0.9em; font-weight:bold; transition: 0.2s;}
+.btn-apply { background: #1b5e20; border: none; width: 100%; margin-top: 10px; padding: 12px; box-sizing: border-box; border-radius: 6px; color: white;}
+.btn-apply:hover { filter: brightness(1.2); }
+.btn-purge { background: #d84315; border: none; width: 100%; margin-top: 15px; font-size: 1.1em; padding: 15px; border-radius: 8px;}
+.btn-test { background: transparent; border: 2px solid #29b6f6; color: #29b6f6; border-radius: 6px; padding: 10px 20px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+.btn-test:hover { background: #29b6f6; color: #000; }
+.active-mode { background: #00e676 !important; color: #000 !important; border: none; }
+
+select, input[type="text"], input[type="password"], input[type="number"] { background: #222; color: #00e676; border: 1px solid #444; padding: 10px 15px; border-radius: 6px; outline: none; font-weight: bold; width: 100%; font-size: 1em; box-sizing: border-box; transition: opacity 0.3s;}
+input::placeholder { color: #555; }
+
+.hw-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: stretch; background: #1a1a1a; padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #333;}
+
+.table-responsive { width: 100%; overflow-x: auto; margin-top: 10px; }
+table { width: 100%; border-collapse: collapse; font-size: 0.85em; min-width: 600px; }
+th, td { padding: 10px; border-bottom: 1px solid #222; text-align: left; }
+.life-bar { height: 4px; background: #222; border-radius: 2px; margin-top: 4px; width: 100%; }
+.life-fill { height: 100%; border-radius: 2px; }
+
+.badge { background: #ff5252; color: white; padding: 5px 12px; border-radius: 20px; font-size: 0.8em; font-weight: bold; display: none; }
+.badge.boost { background: #29b6f6; display: inline-block; animation: pulse 2s infinite; }
+
+.info-box { background: #1a1a1a; border-left: 4px solid #00e676; padding: 15px; margin-top: 15px; text-align: left; font-size: 0.85em; line-height: 1.5; }
+.stat-pill { background: #222; padding: 5px 10px; border-radius: 15px; font-size: 0.8em; margin: 5px 2px; display: inline-block; }
+.tooltip-icon { display:inline-block; background:#333; color:#aaa; border-radius:50%; width:18px; height:18px; text-align:center; font-size:0.8em; line-height:18px; cursor:pointer; margin-left:5px; font-weight:bold; vertical-align: text-bottom; }
+.tooltip-icon:hover { background:#00e676; color:#000; }
+
+.algo-grid { display: grid; grid-template-columns: 1fr; gap: 5px; margin-bottom: 15px; }
+@media (min-width: 768px) { .algo-grid { grid-template-columns: repeat(3, 1fr); } }
+
+/* WIKI STYLES */
+.wiki-section { background: #1a1a1a; border-left: 4px solid #4fc3f7; padding: 20px; margin-bottom: 20px; border-radius: 0 8px 8px 0; text-align: left; }
+.wiki-section h3 { margin-top: 0; color: #4fc3f7; }
+
+/* AUTH VISTAS CENTRADAS ABSOLUTAS */
+.auth-container { display: flex; flex-direction: column; justify-content: center; align-items: center; flex: 1; width: 100%; padding: 20px; box-sizing: border-box; min-height: calc(100vh - 80px); }
+.auth-box { background: #141414; padding: 30px; border-radius: 12px; border: 1px solid #333; width: 100%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; box-sizing: border-box; margin: 0 auto; }
+.auth-input { margin: 10px 0; }
+.error-msg { color: #ff5252; font-size: 0.9em; margin-top: 10px; display: none; background: rgba(255,82,82,0.1); padding: 10px; border-radius: 6px; border: 1px solid #ff5252; }
+
+.view { display: none; width: 100%; }
+.view.active { display: flex; }
+#view-dashboard.active { display: block; }
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}

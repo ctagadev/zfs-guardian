@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ZFS Guardian</title>
+    <!-- Módulos CSS/JS locales para rendimiento offline y código limpio -->
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/i18n.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/app.js" defer></script>
+</head>
+<body>
+
+    <div class="header">
+        <div class="header-content">
+            <h1 style="display: flex; align-items: baseline; gap: 10px; margin: 0;">🛡️ ZFS Guardian <span style="font-size: 0.55em; color: #666; font-weight: normal; font-family: monospace; letter-spacing: 1px;">v1.0.0</span></h1>
+            <div class="header-controls" id="header-controls" style="display:none;">
+                <div style="display: flex; gap: 10px;">
+                    <span id="badge-failsafe" class="badge" data-i18n="badge_failsafe">⚠️ FAIL-SAFE</span>
+                    <span id="badge-boost" class="badge" data-i18n="badge_boost">🚀 PRE-ENFRIAMIENTO</span>
+                </div>
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap:wrap; justify-content:center;">
+                    <!-- Selector de Idiomas Desplegable -->
+                    <select id="lang-selector" onchange="setLang(this.value)" style="width: auto; padding: 8px; border-radius:6px; background:#222; color:#00e676; border:1px solid #444; font-weight:bold; outline:none; cursor:pointer;">
+                    </select>
+
+                    <select id="timeframe" onchange="update()" style="width: auto; padding: 8px;">
+                        <option value="1" data-i18n="time_1h">Última Hora</option>
+                        <option value="3" data-i18n="time_3h">Últimas 3 Horas</option>
+                        <option value="6" data-i18n="time_6h">Últimas 6 Horas</option>
+                        <option value="12" data-i18n="time_12h">Últimas 12 Horas</option>
+                        <option value="24" selected data-i18n="time_24h">Últimas 24 Horas</option>
+                        <option value="48" data-i18n="time_48h">Últimas 48 Horas</option>
+                        <option value="168" data-i18n="time_1w">Última Semana</option>
+                        <option value="720" data-i18n="time_1m">Último Mes</option>
+                        <option value="2160" data-i18n="time_3m">Últimos 3 Meses</option>
+                    </select>
+                    <button style="background:transparent; border:1px solid #444; margin:0;" onclick="logout()" data-i18n="btn_logout">Salir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AUTH VISTAS -->
+    <div id="view-login" class="view auth-container active">
+        <div class="auth-box">
+            <h2 style="margin-top:0; color:#4fc3f7;">Autenticación</h2>
+            <input type="text" id="log-user" class="auth-input" placeholder="Usuario" onkeypress="if(event.key === 'Enter') doLogin()">
+            <input type="password" id="log-pass" class="auth-input" placeholder="Contraseña" onkeypress="if(event.key === 'Enter') doLogin()">
+            <div id="log-err" class="error-msg"></div>
+            <button class="btn-apply" style="margin-top: 15px;" onclick="doLogin()">Entrar al Sistema</button>
+        </div>
+    </div>
+    
+    <div id="view-login-2fa" class="view auth-container">
+        <div class="auth-box">
+            <h2 style="margin-top:0; color:#b388ff;">2FA</h2>
+            <input type="text" id="log-2fa-code" class="auth-input" placeholder="000000" style="text-align:center; font-weight:bold; letter-spacing:5px;" onkeypress="if(event.key === 'Enter') verify2FALogin()">
+            <div id="log-2fa-err" class="error-msg"></div>
+            <button class="btn-apply" style="background:#b388ff; color:#000;" onclick="verify2FALogin()">Verificar</button>
+        </div>
+    </div>
+    
+    <div id="view-setup" class="view auth-container">
+        <div class="auth-box" style="max-width: 500px;">
+            <h2 style="margin-top:0; color:#ffab40;">⚠️ Setup de Seguridad</h2>
+            <p style="color:#aaa; font-size:0.9em;">Define un usuario administrador y una contraseña fuerte.</p>
+            <input type="hidden" id="set-olduser">
+            <input type="hidden" id="set-oldpass">
+            <input type="text" id="set-user" class="auth-input" placeholder="Nuevo Usuario">
+            <input type="password" id="set-pass" class="auth-input" placeholder="Nueva Contraseña">
+            <input type="password" id="set-pass2" class="auth-input" placeholder="Repetir Contraseña">
+            <div id="set-err" class="error-msg"></div>
+            <button class="btn-apply" onclick="doSetup()">Aplicar Seguridad</button>
+        </div>
+    </div>
+
+    <!-- DASHBOARD PRINCIPAL -->
+    <div id="view-dashboard" class="view" style="width:100%;">
+        <div class="tabs">
+            <button class="tab-btn active" onclick="openTab(event, 'tab-guardian')" data-i18n="tab_thermal">🎛️ Térmico</button>
+            <button class="tab-btn" onclick="openTab(event, 'tab-zfs')" data-i18n="tab_zfs">💾 ZFS I/O</button>
+            <button class="tab-btn" onclick="openTab(event, 'tab-mech')" data-i18n="tab_mech">⚙️ Mecánica</button>
+            <button class="tab-btn" onclick="openTab(event, 'tab-hardware'); loadHardware()" data-i18n="tab_hw">🛠️ Hardware</button>
+            <button class="tab-btn" onclick="openTab(event, 'tab-alerts'); loadAlerts()" data-i18n="tab_alerts">🔔 Alertas</button>
+            <button class="tab-btn" onclick="openTab(event, 'tab-sec'); loadSecurity()" data-i18n="tab_sec">🔒 Seguridad</button>
+            <button class="tab-btn" onclick="openTab(event, 'tab-help')" data-i18n="tab_help">📖 Ayuda / Wiki</button>
+        </div>
+
+        <!-- 1. TÉRMICO -->
+        <div id="tab-guardian" class="tab-content active">
+            <div class="grid">
+                <div class="card">
+                    <h3 data-i18n="max_disk">Máxima Discos</h3>
+                    <div class="temp" id="val-max">--ºC</div>
+                    <p style="font-size: 0.85em; color: #888;">
+                        <span data-i18n="delta_term">Delta Térmico:</span> <strong style="color:#fff" id="val-delta">--</strong>ºC
+                        <span class="tooltip-icon" onclick="alert(t('tt_delta'))">i</span>
+                    </p>
+                    <div style="margin-top: 15px;">
+                        <div class="stat-pill"><span data-i18n="env_temp">Ambiental:</span> <span id="val-systin" style="color:#ffab40">--</span>ºC <span class="tooltip-icon" onclick="alert(t('tt_env'))">i</span></div>
+                        <div class="stat-pill"><span data-i18n="eff_idx">Eficiencia:</span> <span id="val-eff" style="color:#00e676">--</span> idx <span class="tooltip-icon" onclick="alert(t('tt_eff'))">i</span></div>
+                    </div>
+                </div>
+
+                <div class="card" style="text-align: left;" id="fans-status-box">
+                    <h3 style="text-align: center; margin-top: 0;" data-i18n="airflow">Flujo de Aire</h3>
+                </div>
+
+                <div class="card" style="grid-column: 1 / -1;">
+                    <h3 data-i18n="algo_title">Algoritmo de Refrigeración (Pool ZFS):</h3>
+                    <div style="background: #1a1a1a; padding: 15px; border-radius: 8px; text-align: left;">
+                        <div class="algo-grid">
+                            <button id="btn-aggressive" onclick="apply({mode:'aggressive'})" data-i18n="btn_aggr">Agresivo</button>
+                            <button id="btn-aggressive_inverse" onclick="apply({mode:'aggressive_inverse'})" data-i18n="btn_inv">Inverso</button>
+                            <button id="btn-delta_soft" onclick="apply({mode:'delta_soft'})" data-i18n="btn_soft">Delta Soft</button>
+                        </div>
+                        <div id="mode-info" class="info-box"></div>
+                    </div>
+                    <div class="grid" id="manual-sliders-box" style="margin-top:20px;"></div>
+                </div>
+
+                <div class="card" style="grid-column: 1 / -1; padding: 10px;">
+                    <canvas id="chart-temp" height="250" style="max-height: 300px; width: 100%;"></canvas>
+                </div>
+
+                <div class="card" style="grid-column: 1 / -1;">
+                    <h3 style="text-align: left; margin-top: 0;" data-i18n="smart_table_title">Monitor S.M.A.R.T. Predictivo</h3>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th data-i18n="t_disk">Disco</th>
+                                    <th data-i18n="t_temp">Temp</th>
+                                    <th><span data-i18n="t_dev">Desv (48h)</span> <span class="tooltip-icon" onclick="alert(t('tt_dev'))">i</span></th>
+                                    <th data-i18n="t_minmax">Min - Max</th>
+                                    <th data-i18n="t_avg">Media</th>
+                                    <th><span data-i18n="t_health">Salud</span> <span class="tooltip-icon" onclick="alert(t('tt_health'))">i</span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="disk-table"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. ZFS -->
+        <div id="tab-zfs" class="tab-content">
+            <div class="grid">
+                <div class="card" style="background: #111;">
+                    <h3 style="color: #4fc3f7;" data-i18n="read_zfs">Lectura ZFS</h3>
+                    <div class="temp" id="val-read" style="color: #4fc3f7;">--</div> 
+                    <p style="font-size: 0.8em; color: #888;">MB/s</p>
+                </div>
+                <div class="card" style="background: #111;">
+                    <h3 style="color: #ff5252;" data-i18n="write_zfs">Escritura ZFS</h3>
+                    <div class="temp" id="val-write" style="color: #ff5252;">--</div> 
+                    <p style="font-size: 0.8em; color: #888;">MB/s</p>
+                </div>
+                <div class="card" style="background: #111;">
+                    <h3 style="color: #b388ff;" data-i18n="comb_io">I/O Combinado</h3>
+                    <div class="temp" id="val-total" style="color: #b388ff;">--</div> 
+                    <p style="font-size: 0.8em; color: #888;">MB/s</p>
+                </div>
+                <div class="card" style="grid-column: 1 / -1; padding: 10px;">
+                    <canvas id="chart-zfs" height="250" style="max-height: 300px; width: 100%;"></canvas>
+                </div>
+
+                <div class="card" style="grid-column: 1 / -1; text-align: left; background: #1a1a1a;">
+                    <h4 style="margin-top:0; color:#00e676;" data-i18n="pred_logic">🧠 Lógica Predictiva</h4>
+                    <p style="color:#aaa; font-size:0.9em;" data-i18n="pred_desc">Se activa si I/O supera el umbral y hay al menos 2 discos activos.</p>
+                    <div style="background: #111; padding: 15px; border-radius: 8px; border: 1px solid #333; display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                        <label style="color: #fff; font-weight: bold;">
+                            <input type="checkbox" id="chk-boost" onchange="toggleBoostUI(this.checked); apply({boost_enabled: this.checked})" style="transform: scale(1.3); margin-right: 10px;"> 
+                            <span data-i18n="act_pred">Activar Predictivo</span>
+                        </label>
+                        <input type="number" id="inp-boost" step="25" style="width: 100px; padding: 8px;"> 
+                        <span style="color: #888;" id="txt-boost">MB/s</span>
+                        <button class="btn-apply" id="btn-boost" style="width: auto; margin:0; padding: 10px 20px;" onclick="apply({boost_threshold: parseInt(document.getElementById('inp-boost').value)}, true)" data-i18n="btn_apply_thr">APLICAR UMBRAL</button>
+                    </div>
+                </div>
+                
+                <div class="card" style="grid-column: 1 / -1; margin-top: 20px;">
+                    <h3 style="text-align: left; margin-top: 0; color: #b388ff;" data-i18n="zfs_table_title">Monitor I/O por Disco</h3>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th data-i18n="t_disk">Disco</th>
+                                    <th data-i18n="read_zfs">Lectura ZFS</th>
+                                    <th data-i18n="write_zfs">Escritura ZFS</th>
+                                    <th data-i18n="comb_io">Total I/O</th>
+                                </tr>
+                            </thead>
+                            <tbody id="zfs-table"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. MECÁNICA -->
+        <div id="tab-mech" class="tab-content">
+            <div class="grid">
+                <div class="card" style="grid-column: 1 / -1; display:flex; flex-direction: column; gap: 15px; text-align: left; background: #1a1a1a;">
+                    <div style="display: flex; justify-content: space-between; flex-wrap: wrap; align-items: center; gap: 15px;">
+                        <div>
+                            <h3 style="margin-top:0;" data-i18n="calib_lab">Laboratorio</h3>
+                            <p style="color:#aaa; font-size:0.9em; margin-bottom:0;" data-i18n="calib_desc">Calcula el desgaste del motor comparando RPM con lo esperado.</p>
+                        </div>
+                        <button onclick="startCalibrate()" style="background:#f57c00; font-weight:bold; padding: 15px; border-radius: 8px; font-size: 1em;" data-i18n="btn_calib">⚖️ INICIAR CALIBRACIÓN MÁSTER</button>
+                    </div>
+                </div>
+                <div class="card" style="grid-column: 1 / -1;">
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th data-i18n="t_fan">Ventilador</th>
+                                    <th data-i18n="t_pwm">Señal PWM</th>
+                                    <th data-i18n="t_rpm">RPM Actual</th>
+                                    <th><span data-i18n="t_motor">Salud Motor</span> <span class="tooltip-icon" onclick="alert(t('tt_motor'))">i</span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="mech-table"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. HARDWARE -->
+        <div id="tab-hardware" class="tab-content">
+            <div class="card" style="text-align: left; grid-column: 1 / -1; margin-bottom: 20px;">
+                <h3 style="color:#00e676; margin-top:0;" data-i18n="map_hdd">1. Mapeo de Discos Duros</h3>
+                <div id="hw-disks-list" style="margin-bottom: 10px;"></div>
+                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: #1a1a1a; padding: 15px; border-radius: 8px; border: 1px solid #333;">
+                    <label style="color:#888; font-weight:bold;" data-i18n="est_years">Años de Vida Estimada:</label>
+                    <input type="number" id="hw-smart-years" style="width: 80px;" value="10">
+                    <button class="btn-apply" style="width: auto; margin-top:0; margin-left: auto;" onclick="saveHardware()" data-i18n="btn_save_disk">💾 GUARDAR DISCOS</button>
+                </div>
+            </div>
+            <div class="card" style="text-align: left; grid-column: 1 / -1; margin-bottom: 20px;">
+                <h3 style="color:#4fc3f7; margin-top:0;" data-i18n="role_fan">2. Roles de Ventiladores</h3>
+                <div id="hw-fans-list" style="margin-bottom: 10px;"></div>
+                <div style="display: flex; justify-content: flex-end;">
+                    <button class="btn-apply" style="width: auto; margin-top:0;" onclick="saveHardware()" data-i18n="btn_save_fan">💾 GUARDAR VENTILADORES</button>
+                </div>
+            </div>
+            <div class="card" style="text-align: left; grid-column: 1 / -1;">
+                <h3 style="color:#ffab40; margin-top:0;" data-i18n="env_sens">3. Sensor Ambiental</h3>
+                <p style="color:#aaa; font-size:0.9em;" data-i18n="env_desc">Selecciona el sensor de la placa base.</p>
+                <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                    <select id="hw-ambient-select" style="flex: 1; min-width: 250px;"></select>
+                    <button class="btn-apply" style="width: auto; margin-top:0;" onclick="saveHardware()" data-i18n="btn_save_sens">💾 GUARDAR SENSOR</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. NOTIFICACIONES -->
+        <div id="tab-alerts" class="tab-content">
+            <div class="card" style="text-align: left; grid-column: 1 / -1; margin-bottom: 20px;">
+                <h3 style="color:#b388ff; margin-top:0;" data-i18n="tg_bot">Telegram Bot</h3>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 200px;">
+                        <label style="color:#888; font-size:0.9em;">Bot Token:</label>
+                        <input type="text" id="tg-token" placeholder="Ej: 123456789:ABCDefghIJKlmnOPQRstuvWXYZ">
+                    </div>
+                    <div style="flex: 1; min-width: 200px;">
+                        <label style="color:#888; font-size:0.9em;">Chat ID:</label>
+                        <input type="text" id="tg-chatid" placeholder="Ej: -1001234567890">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 15px; justify-content: flex-end;">
+                    <button class="btn-test" onclick="testTelegram()" data-i18n="btn_test_tg">📩 PRUEBA TELEGRAM</button>
+                    <button class="btn-apply" style="width: auto; margin:0; background:#b388ff; color:#000;" onclick="saveTelegram()" data-i18n="btn_save_tg">💾 GUARDAR</button>
+                </div>
+            </div>
+            <div class="card" style="text-align: left; grid-column: 1 / -1;">
+                <h3 style="color:#00e676; margin-top:0;" data-i18n="email_srv">Servidor Email</h3>
+                <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                    <div><label style="color:#888; font-size:0.9em;" data-i18n="srv_lbl">Servidor:</label><input type="text" id="em-srv"></div>
+                    <div><label style="color:#888; font-size:0.9em;" data-i18n="port_lbl">Puerto:</label><input type="number" id="em-port"></div>
+                    <div>
+                        <label style="color:#888; font-size:0.9em;" data-i18n="sec_lbl">Seguridad:</label>
+                        <select id="em-tls">
+                            <option value="starttls">STARTTLS</option>
+                            <option value="tls">SSL/TLS</option>
+                            <option value="none">Ninguna</option>
+                        </select>
+                    </div>
+                    <div><label style="color:#888; font-size:0.9em;" data-i18n="usr_lbl">Usuario:</label><input type="text" id="em-usr"></div>
+                    <div><label style="color:#888; font-size:0.9em;" data-i18n="pass_lbl">Contraseña:</label><input type="password" id="em-pass" placeholder="(••••••••)"></div>
+                    <div><label style="color:#888; font-size:0.9em;" data-i18n="dest_lbl">Destino:</label><input type="text" id="em-dest"></div>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end;">
+                    <button class="btn-test" onclick="testSMTP()" data-i18n="btn_test_em">📩 PRUEBA EMAIL</button>
+                    <button class="btn-apply" style="width: auto; margin:0;" onclick="saveSMTP()" data-i18n="btn_save_em">💾 GUARDAR EMAIL</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. SEGURIDAD -->
+        <div id="tab-sec" class="tab-content">
+            <div class="grid">
+                <div class="card" style="text-align: left;">
+                    <h3 style="color:#ff5252; margin-top:0;" data-i18n="sec_pw">Cambiar Contraseña</h3>
+                    <label style="color:#888; font-size:0.9em; display:block; margin-bottom:5px;" data-i18n="pw_curr_lbl">Contraseña Actual:</label>
+                    <input type="password" id="pw-curr" placeholder="****" style="margin-bottom:15px;">
+                    <label style="color:#888; font-size:0.9em; display:block; margin-bottom:5px;" data-i18n="pw_new_lbl">Nueva Contraseña:</label>
+                    <input type="password" id="pw-new1" placeholder="****" style="margin-bottom:15px;">
+                    <label style="color:#888; font-size:0.9em; display:block; margin-bottom:5px;" data-i18n="pw_new2_lbl">Repetir Nueva:</label>
+                    <input type="password" id="pw-new2" placeholder="****" style="margin-bottom:15px;">
+                    <button class="btn-apply" onclick="changePassword()" data-i18n="btn_upd_pw">ACTUALIZAR CONTRASEÑA</button>
+                </div>
+                <div class="card" style="text-align: left;">
+                    <h3 style="color:#b388ff; margin-top:0;" data-i18n="sec_2fa">Autenticación 2FA</h3>
+                    <p style="color:#aaa; font-size:0.9em;" data-i18n="sec_2fa_desc">Añade una capa extra.</p>
+                    <div id="2fa-box" style="margin-top: 15px;">...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7. WIKI -->
+        <div id="tab-help" class="tab-content">
+            <div class="card" style="grid-column: 1 / -1;">
+                <h2 style="color: #00e676; margin-top:0; text-align:left;" data-i18n="wiki_title">📖 Wiki ZFS Guardian</h2>
+                <div class="wiki-section" style="border-left-color: #4fc3f7;">
+                    <h3 data-i18n="wiki_term_t" style="color: #4fc3f7; margin-top: 0;">🎛️ Pestaña Térmico</h3>
+                    <p style="color:#aaa; font-size:0.95em; line-height: 1.5;" data-i18n="wiki_term_d">...</p>
+                </div>
+                <div class="wiki-section" style="border-left-color: #b388ff;">
+                    <h3 data-i18n="wiki_zfs_t" style="color:#b388ff; margin-top: 0;">💾 Pestaña ZFS I/O</h3>
+                    <p style="color:#aaa; font-size:0.95em; line-height: 1.5;" data-i18n="wiki_zfs_d">...</p>
+                </div>
+                <div class="wiki-section" style="border-left-color: #ffab40;">
+                    <h3 data-i18n="wiki_mech_t" style="color:#ffab40; margin-top: 0;">⚙️ Pestaña Mecánica</h3>
+                    <p style="color:#aaa; font-size:0.95em; line-height: 1.5;" data-i18n="wiki_mech_d">...</p>
+                </div>
+                <div class="wiki-section" style="border-left-color: #00e676;">
+                    <h3 data-i18n="wiki_hw_t" style="color:#00e676; margin-top: 0;">🛠️ Hardware</h3>
+                    <p style="color:#aaa; font-size:0.95em; line-height: 1.5;" data-i18n="wiki_hw_d">...</p>
+                </div>
+                <div class="wiki-section" style="border-left-color: #ff5252;">
+                    <h3 data-i18n="wiki_alert_t" style="color:#ff5252; margin-top: 0;">🔔 Alertas y S.M.A.R.T.</h3>
+                    <p style="color:#aaa; font-size:0.95em; line-height: 1.5;" data-i18n="wiki_alert_d">...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
