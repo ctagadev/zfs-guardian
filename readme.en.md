@@ -50,9 +50,21 @@ In most home servers and NAS environments, motherboards control fans based solel
 
 ## 🚀 Installation (Docker)
 
-ZFS Guardian is designed to run as a Docker container. It requires low-level system access to perform its duties. Here is why it requires specific non-negotiable permissions:
-* `privileged: true`: Necessary to interact directly with the hard drive controllers via `smartctl` commands (S.M.A.R.T. RAW I/O). Bypassing Kernel isolation allows the daemon to read the actual heat straight from the magnetic platters.
-* `/sys/class/hwmon:rw`: Necessary to *write* and deploy the new voltages (PWM) to the physical fan motor controllers on the motherboard. (Using a read-only `ro` permission would turn the app into a passive monitor with no real cooling capabilities).
+**Why elevated permissions are required**
+
+ZFS Guardian runs as a Docker container but requires low-level system access to perform hardware monitoring and fan control.
+
+For this reason, the following permissions are required:
+
+`privileged: true`
+Required to interact directly with storage devices via `smartctl` in order to read S.M.A.R.T. data.
+This allows the application to access disk temperature information and other hardware metrics that are not available through standard container isolation.
+
+`/sys/class/hwmon:rw`
+Required to control motherboard fan headers via the Linux `hwmon` interface.
+The application writes PWM values directly to the fan controllers to dynamically adjust cooling.
+
+Using a read-only (`ro`) mount would only allow passive monitoring and would prevent ZFS Guardian from actively controlling fan speeds.
 
 ### Option A: Pre-built Image (Recommended)
 
