@@ -5,7 +5,7 @@ services:
     privileged: true
     restart: unless-stopped
     ports:
-      - "48082:8000"
+      - "48080:8000"
     volumes:
       - ./data:/app/data
       # Montamos las rutas físicas para que el escáner las vea

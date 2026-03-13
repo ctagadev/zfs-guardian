@@ -61,11 +61,11 @@ If you just want to use the application without tinkering with the source code, 
 ```yaml
 services:
   zfs-guardian:
-    image: your-github-user/zfs-guardian:latest # Adjust to your DockerHub/GHCR image
+    image: ctagadev/zfs-guardian:latest # Adjust to your DockerHub/GHCR image
     container_name: zfs-guardian
     privileged: true
     ports:
-      - "48082:8000"
+      - "48080:8000"
     volumes:
       - ./data:/app/data                        # Stores DB, configs, and languages
       - /dev/disk/by-id:/dev/disk/by-id:ro      # Needed for persistent ZFS mapping
@@ -83,7 +83,7 @@ docker compose up -d
 If you prefer to compile the application yourself to mod it or read the source code, you must clone the repository first:
 
 ```bash
-git clone https://github.com/your-username/zfs-guardian.git
+git clone https://github.com/ctagadev/zfs-guardian.git
 cd zfs-guardian
 ```
 
