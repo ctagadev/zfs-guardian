@@ -50,9 +50,21 @@ En la mayoría de servidores y NAS caseros, las placas base controlan los ventil
 
 ## 🚀 Instalación (Docker)
 
-ZFS Guardian está diseñado para correr como un contenedor Docker y requiere acceso avanzado de bajo nivel al hardware del sistema anfitrión. Es por ello que su ejecución requiere los siguientes permisos innegociables:
-* `privileged: true`: Obligatorio para poder interactuar directamente con la controladora SAS/SATA/NVMe de los discos mediante comandos `smartctl` (S.M.A.R.T. RAW I/O). Sin este permiso, el daemon no puede leer el calor real desde los propios platos magnéticos saltándose el aislamiento del Kernel.
-* `/sys/class/hwmon:rw`: Necesario para poder *escribir* y asignar los nuevos voltajes (PWM) en los conectores físicos de los motores de la placa base. (Limitarlo a permisos de solo lectura `ro` transformaría la app en un simple monitor incapaz de refrigerar nada).
+**Por qué se requieren permisos elevados**
+
+ZFS Guardian se ejecuta como un contenedor Docker, pero necesita acceso de bajo nivel al sistema para realizar la monitorización de hardware y el control de los ventiladores.
+
+Por ello, se requieren los siguientes permisos:
+
+`privileged: true`
+Necesario para interactuar directamente con los dispositivos de almacenamiento a través de `smartctl` y leer datos S.M.A.R.T.
+Esto permite que la aplicación acceda a la información de temperatura de los discos y otras métricas de hardware que no están disponibles con el aislamiento estándar de un contenedor.
+
+`/sys/class/hwmon:rw`
+Necesario para controlar los headers de ventiladores de la placa base mediante la interfaz `hwmon` de Linux.
+La aplicación escribe directamente los valores PWM en los controladores de los ventiladores para ajustar dinámicamente la refrigeración.
+
+Montar el directorio en solo lectura (`ro`) solo permitiría la monitorización pasiva y evitaría que ZFS Guardian controlara activamente la velocidad de los ventiladores.
 
 ### Opción A: Imagen Pre-compilada (Recomendado)
 
