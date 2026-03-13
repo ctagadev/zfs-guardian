@@ -94,7 +94,7 @@ docker compose up -d --build
 
 ---
 
-Access the web interface at: `http://YOUR_IP:48082`
+Access the web interface at: `http://YOUR_IP:48080`
 
 ---
 
