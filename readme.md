@@ -61,16 +61,18 @@ Si solo quieres usar la aplicación sin modificar el código fuente, crea una ca
 ```yaml
 services:
   zfs-guardian:
-    image: ctagadev/zfs-guardian:latest # Ajustar a tu imagen final en DockerHub/GHCR
+    image: ctagadev/zfs-guardian:latest
     container_name: zfs-guardian
     privileged: true
+    restart: unless-stopped
     ports:
       - "48080:8000"
     volumes:
       - ./data:/app/data                        # Guarda la BD, configs e idiomas
       - /dev/disk/by-id:/dev/disk/by-id:ro      # Necesario para mapeo persistente ZFS
       - /sys/class/hwmon:/sys/class/hwmon:rw    # Necesario para inyectar voltaje PWM e i2c
-    restart: unless-stopped
+    environment:
+      - TZ=Europe/Madrid
 ```
 
 Luego inicia el contenedor:
